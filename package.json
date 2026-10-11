@@ -1,0 +1,38 @@
+{
+  "name": "tpns-exchange-subsystem",
+  "version": "1.0.0",
+  "description": "TPNS Standalone Serverless Exchange Engine",
+  "type": "module",
+  "scripts": {
+    "build": "bash build-and-pin.sh",
+    "compile:contracts": "hardhat compile",
+    "test:contracts": "hardhat test",
+    "test:mesh-benchmarks": "mocha --loader=ts-node/esm test/mesh-benchmarks.test.ts",
+    "test:a2spa": "mocha --loader=ts-node/esm test/a2spa-pressure-test.ts",
+    "test": "npm run compile:contracts"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
+    "@types/chai": "^4.3.16",
+    "@types/mocha": "^10.0.6",
+    "@types/node": "^20.12.7",
+    "chai": "^4.3.10",
+    "dotenv": "^16.4.5",
+    "hardhat": "^2.22.3",
+    "mocha": "^10.4.0",
+    "puppeteer": "^22.7.1",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.4.5"
+  },
+  "dependencies": {
+    "@chainsafe/libp2p-gossipsub": "^13.0.0",
+    "@chainsafe/libp2p-noise": "^15.0.0",
+    "@chainsafe/libp2p-yamux": "^6.0.1",
+    "@libp2p/circuit-relay-v2": "^1.0.9",
+    "@libp2p/identify": "^2.0.8",
+    "@libp2p/webrtc": "^4.0.14",
+    "@libp2p/websockets": "^8.0.8",
+    "ethers": "^6.12.0",
+    "libp2p": "^1.4.3"
+  }
+}

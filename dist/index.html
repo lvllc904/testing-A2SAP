@@ -1,0 +1,1070 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Promethean Holographic Exchange — Universal Matrix & Parity Index</title>
+    <style>
+        :root {
+            --bg-deep: #030508;
+            --bg-surface: #070a10;
+            --border-glow: #0e1726;
+            --border-active: #1e3a5f;
+            --matrix-glow: #00ffcc;
+            --matrix-dim: #008866;
+            --matrix-warn: #ff3366;
+            --matrix-gold: #ffcc00;
+            --matrix-purple: #bb86fc;
+            --matrix-blue: #00d4ff;
+            --candle-green: #00e699;
+            --candle-red: #ff3366;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { background-color: var(--bg-deep); color: var(--text-primary); font-family: 'Courier New', monospace; padding: 16px; overflow-x: hidden; min-height: 100vh; }
+        .hud-wrapper { display: flex; flex-direction: column; gap: 14px; min-height: calc(100vh - 32px); }
+        header { border: 1px solid var(--border-glow); background: var(--bg-surface); padding: 12px 18px; display: flex; justify-content: space-between; align-items: center; border-radius: 4px; }
+        .system-title { font-size: 17px; letter-spacing: 2px; color: var(--text-primary); text-shadow: 0 0 12px rgba(0, 255, 204, 0.3); font-weight: 700; }
+        .status-node { display: flex; align-items: center; gap: 10px; font-size: 11px; background: #020305; padding: 6px 14px; border: 1px solid var(--matrix-dim); border-radius: 2px; }
+        .pulse-indicator { width: 7px; height: 7px; background-color: var(--matrix-glow); border-radius: 50%; animation: pulse 1.8s infinite; }
+        
+        .main-matrix { display: grid; grid-template-columns: 340px 1fr 380px; gap: 14px; flex: 1; min-height: 0; }
+        .panel { border: 1px solid var(--border-glow); background: var(--bg-surface); padding: 14px; display: flex; flex-direction: column; min-height: 0; border-radius: 4px; position: relative; }
+        .panel h2 { font-size: 11px; margin: 0 0 12px 0; letter-spacing: 2px; color: var(--matrix-glow); text-transform: uppercase; display: flex; justify-content: space-between; align-items: center; }
+        
+        /* Action Constructor */
+        .field-group { margin-bottom: 11px; }
+        label { display: block; font-size: 9px; color: var(--text-secondary); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 1px; }
+        select, input { width: 100%; background: #030508; border: 1px solid var(--border-glow); color: #fff; padding: 8px 10px; font-family: monospace; font-size: 11px; border-radius: 3px; }
+        select:focus, input:focus { border-color: var(--matrix-glow); outline: none; }
+        .action-gate-btn { background: transparent; border: 1px solid var(--matrix-glow); color: var(--matrix-glow); font-family: monospace; font-weight: bold; padding: 11px; cursor: pointer; width: 100%; letter-spacing: 2px; margin-top: 6px; border-radius: 3px; transition: all 0.2s ease; }
+        .action-gate-btn:hover { background: var(--matrix-glow); color: #000; box-shadow: 0 0 20px rgba(0, 255, 204, 0.4); }
+        .spv-badge { font-size: 9px; padding: 3px 6px; background: #111a2e; border: 1px solid #1e3a5f; color: #7dd3fc; border-radius: 2px; display: inline-block; margin-top: 3px; }
+        
+        /* Center Column: 3D Lattice + Chart Stack */
+        .center-column { display: flex; flex-direction: column; gap: 14px; min-height: 0; }
+        
+        /* 3D Holographic Lattice Visualizer */
+        .lattice-container { height: 360px; min-height: 320px; position: relative; background: #030408; border: 1px solid var(--border-glow); border-radius: 4px; overflow: hidden; }
+        #holographic-canvas { width: 100%; height: 100%; display: block; cursor: grab; }
+        #holographic-canvas:active { cursor: grabbing; }
+        .chain-metrics-bar { position: absolute; top: 10px; left: 10px; right: 10px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; pointer-events: none; }
+        .metric-card { background: rgba(10, 13, 20, 0.85); backdrop-filter: blur(8px); border: 1px solid var(--border-glow); padding: 6px 8px; border-radius: 3px; font-size: 9px; }
+        .metric-label { color: var(--text-secondary); font-size: 8px; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 2px; }
+        .metric-val { color: var(--matrix-glow); font-weight: bold; font-size: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        
+        .node-inspector { position: absolute; bottom: 10px; left: 10px; right: 10px; background: rgba(10, 13, 20, 0.9); backdrop-filter: blur(8px); border: 1px solid var(--border-active); padding: 9px 12px; border-radius: 4px; display: flex; justify-content: space-between; align-items: center; }
+        .node-info-title { font-size: 12px; font-weight: bold; color: #fff; margin-bottom: 2px; }
+        .node-info-desc { font-size: 9px; color: var(--text-secondary); }
+        .node-info-rate { font-size: 13px; color: var(--matrix-glow); font-weight: bold; text-align: right; }
+        
+        /* Chart Panel (Directly Beneath) */
+        .chart-panel { flex: 1; min-height: 320px; display: flex; flex-direction: column; background: #030408; border: 1px solid var(--border-glow); border-radius: 4px; padding: 10px 12px; }
+        .chart-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 8px; }
+        .chart-controls-left { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+        .chart-controls-right { display: flex; align-items: center; gap: 8px; }
+        
+        .btn-toggle { background: #070d18; border: 1px solid #152238; color: #8899ac; font-family: monospace; font-size: 9px; padding: 4px 8px; border-radius: 2px; cursor: pointer; transition: all 0.15s ease; text-transform: uppercase; letter-spacing: 0.5px; }
+        .btn-toggle:hover { color: #fff; border-color: #2a4365; }
+        .btn-toggle.active { background: #0b253a; border-color: var(--matrix-glow); color: var(--matrix-glow); font-weight: bold; box-shadow: 0 0 8px rgba(0,255,204,0.2); }
+        
+        .stat-pill { display: flex; align-items: center; gap: 6px; background: #070c14; border: 1px solid #131e30; padding: 3px 8px; border-radius: 2px; font-size: 10px; }
+        .stat-label { color: #64748b; font-size: 8px; letter-spacing: 1px; }
+        .stat-num { font-weight: bold; font-family: monospace; }
+        .change-pos { color: var(--candle-green); }
+        .change-neg { color: var(--candle-red); }
+        
+        .chart-canvas-wrap { position: relative; flex: 1; width: 100%; min-height: 230px; }
+        #chain-chart-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: block; }
+        
+        /* Telemetry Streams */
+        .telemetry-split { display: grid; grid-template-rows: 1fr 1fr; gap: 14px; height: 100%; min-height: 0; }
+        .terminal-viewport { background: #020306; border: 1px solid #101622; flex: 1; overflow-y: auto; padding: 8px; font-size: 10px; color: #94a3b8; line-height: 1.45; border-radius: 3px; font-family: monospace; }
+        .log-entry { margin-bottom: 4px; display: grid; grid-template-columns: 64px 1fr; gap: 6px; }
+        .timestamp { color: var(--text-secondary); }
+        .success-text { color: var(--matrix-glow); }
+        .alert-text { color: var(--matrix-warn); }
+        .gold-text { color: var(--matrix-gold); }
+        .purple-text { color: var(--matrix-purple); }
+
+        @keyframes pulse {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 255, 204, 0.6); }
+            70% { transform: scale(1); box-shadow: 0 0 0 8px rgba(0, 255, 204, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 255, 204, 0); }
+        }
+    </style>
+</head>
+<body>
+    <div class="hud-wrapper">
+        <header>
+            <div style="display:flex; align-items:center; gap:14px;">
+                <h1 class="system-title">Promethean Holographic Exchange</h1>
+                <span style="font-size:10px; color:#64748b; letter-spacing:1px;">UNIVERSAL VALUE LATTICE v1.2</span>
+            </div>
+            <div class="status-node">
+                <div class="pulse-indicator"></div>
+                <span>NODE INTERFACE PATH: </span><span id="env-routing-type" class="success-text">RESOLVING ENGINE MATRIX...</span>
+            </div>
+        </header>
+
+        <main class="main-matrix">
+            <!-- Left: Universal Action Constructor -->
+            <section class="panel">
+                <h2>1. Action Constructor</h2>
+                
+                <div class="field-group">
+                    <label>Source Value Element</label>
+                    <select id="asset-src-select"></select>
+                    <div id="src-spv" class="spv-badge">Loading Series SPV...</div>
+                </div>
+
+                <div class="field-group">
+                    <label>Target Value Element</label>
+                    <select id="asset-tgt-select"></select>
+                    <div id="tgt-spv" class="spv-badge">Loading Series SPV...</div>
+                </div>
+
+                <div class="field-group">
+                    <label>Execution Volume (1.0 Unit Multiple)</label>
+                    <input type="number" id="execution-vol" value="10" step="0.1" min="0.0001">
+                </div>
+
+                <div class="field-group">
+                    <label>Holographic Unit Parity Rate (Calculated)</label>
+                    <input type="text" id="execution-rate-display" readonly style="color:var(--matrix-glow); font-weight:bold;">
+                    <input type="hidden" id="execution-rate" value="1000000">
+                </div>
+
+                <button class="action-gate-btn" id="trigger-swap-action">Commit JIT Execution Frame</button>
+
+                <div style="margin-top:14px; padding:9px; background:#04060a; border:1px solid #141c2c; border-radius:3px; font-size:9px; color:#64748b; line-height:1.4;">
+                    <strong style="color:#94a3b8; display:block; margin-bottom:3px;">1-UNIT CHAIN RULE:</strong>
+                    The Holographic Chain stores exactly 1 canonical unit per asset element. Volume executes as scalar projections over the unit vector with zero ledger bloat.
+                </div>
+            </section>
+
+            <!-- Center Column: 3D Holographic Lattice + Candlestick/Volume Chart Directly Beneath -->
+            <div class="center-column">
+                <!-- Upper: 3D Holographic Lattice Visualizer -->
+                <div class="lattice-container">
+                    <canvas id="holographic-canvas"></canvas>
+
+                    <!-- Top Overlay: Live Metrics -->
+                    <div class="chain-metrics-bar">
+                        <div class="metric-card">
+                            <div class="metric-label">Chain Height</div>
+                            <div class="metric-val" id="metric-height">#1</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-label">State Elements</div>
+                            <div class="metric-val" id="metric-elements">23 Units</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-label">Parity Equilibrium</div>
+                            <div class="metric-val" id="metric-equilibrium">100.0% OPTIMAL</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-label">Unit Root Hash</div>
+                            <div class="metric-val" id="metric-roothash">0x...</div>
+                        </div>
+                    </div>
+
+                    <!-- Bottom Overlay: Active Node Inspector -->
+                    <div class="node-inspector" id="node-inspector">
+                        <div>
+                            <div class="node-info-title" id="inspector-symbol">BTC — Bitcoin</div>
+                            <div class="node-info-desc" id="inspector-desc">Tier II: Crypto · TPNS Series C-BTC</div>
+                        </div>
+                        <div>
+                            <div class="node-info-rate" id="inspector-val">$68,500.00 USD</div>
+                            <div style="font-size:9px; color:#64748b; text-align:right;">1.0 Canonical Unit Value</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Lower: Candlestick & Separated Total Volume Chart (Directly Beneath) -->
+                <div class="chart-panel">
+                    <div class="chart-header">
+                        <!-- Toggle Controls Left -->
+                        <div class="chart-controls-left">
+                            <button class="btn-toggle active" id="btn-mode-parity" title="Track Global Holographic Parity Vector Magnitude">PARITY INDEX (Φ)</button>
+                            <button class="btn-toggle" id="btn-mode-pair" title="Track Active Cross-Tier Trade Pair Rate"><span id="lbl-active-pair">SOLAR / BTC</span></button>
+                            
+                            <span style="color:#1e3a5f; margin: 0 2px;">|</span>
+                            
+                            <button class="btn-toggle active" id="btn-type-candle">CANDLES</button>
+                            <button class="btn-toggle" id="btn-type-heikin">HEIKIN-ASHI</button>
+                            <button class="btn-toggle" id="btn-type-area">AREA LINE</button>
+                            <button class="btn-toggle" id="btn-type-spark">SPARKLINE</button>
+                        </div>
+
+                        <!-- Telemetry Stats Right -->
+                        <div class="chart-controls-right">
+                            <div class="stat-pill">
+                                <span class="stat-label">CURRENT Φ:</span>
+                                <span class="stat-num success-text" id="chart-val-display">$78,138.45</span>
+                                <span class="stat-num change-pos" id="chart-change-display">+0.34%</span>
+                            </div>
+                            <div class="stat-pill">
+                                <span class="stat-label">SCALAR VOL:</span>
+                                <span class="stat-num gold-text" id="chart-vol-display">84.2K</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Dual-Pane Chart Canvas (Upper: Price/Index Candles | Lower: Separated Scalar Volume) -->
+                    <div class="chart-canvas-wrap">
+                        <canvas id="chain-chart-canvas"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right: Telemetry & Mesh Streams -->
+            <section class="telemetry-split">
+                <div class="panel">
+                    <h2>2. Shared Memory Telemetry <span id="sab-byte-counter" style="color:var(--text-secondary); font-size:10px;">0 / 1024 Bytes</span></h2>
+                    <div class="terminal-viewport" id="sab-terminal"></div>
+                </div>
+                <div class="panel">
+                    <h2>3. Sovereign Mesh P2P Pipe <span id="mesh-peer-counter" style="color:var(--text-secondary); font-size:10px;">Active Swarm</span></h2>
+                    <div class="terminal-viewport" id="mesh-terminal"></div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script type="module">
+        import { UNIVERSAL_VALUE_ELEMENTS, HolographicUnitRegistry } from './universal-assets.js';
+        import { HolographicHardwareBridge } from './hardware-bridge.js';
+        import { TPNSMeshBootstrapProfile } from './bootstrap-profile.js';
+        import initMatching, { MemoryMatchingEngine, HolographicChainState } from '../pkg/tpns_matching_engine.js';
+        import initZk, { ZkOrderCommitment } from '../pkg/zk/tpns_zk_privacy.js';
+
+        const sabTerm = document.getElementById('sab-terminal');
+        const meshTerm = document.getElementById('mesh-terminal');
+        const registry = new HolographicUnitRegistry();
+
+        function appendLog(element, text, styleClass = '') {
+            const time = new Date().toISOString().slice(11, 19);
+            element.innerHTML += `<div class="log-entry"><span class="timestamp">[${time}]</span><span class="${styleClass}">${text}</span></div>`;
+            element.scrollTop = element.scrollHeight;
+        }
+
+        const isIPFS = window.location.protocol === 'ipfs:' || window.location.pathname.includes('/ipfs/');
+        document.getElementById('env-routing-type').innerText = isIPFS ? 'STATELESS MULTI-VIEW IPFS MATRIX NODE' : 'LOCAL ENGINE SIMULATOR (LOCALHOST)';
+
+        // Populate Asset Dropdowns
+        const srcSelect = document.getElementById('asset-src-select');
+        const tgtSelect = document.getElementById('asset-tgt-select');
+        const srcSpv = document.getElementById('src-spv');
+        const tgtSpv = document.getElementById('tgt-spv');
+        const rateDisplay = document.getElementById('execution-rate-display');
+        const rateHidden = document.getElementById('execution-rate');
+        const lblActivePair = document.getElementById('lbl-active-pair');
+
+        const tiers = ['fiat', 'crypto', 'equity', 'commodity', 'bond'];
+        const tierLabels = { fiat: 'Forex / Sovereign Fiat', crypto: 'Crypto & Digital Tokens', equity: 'Equities & Stock Exchanges', commodity: 'Commodities & Physical Energy', bond: 'Sovereign Bonds & Yields' };
+
+        for (const tier of tiers) {
+            const optgroupSrc = document.createElement('optgroup');
+            optgroupSrc.label = tierLabels[tier];
+            const optgroupTgt = document.createElement('optgroup');
+            optgroupTgt.label = tierLabels[tier];
+
+            UNIVERSAL_VALUE_ELEMENTS.filter(e => e.tier === tier).forEach(el => {
+                const opt1 = new Option(`${el.symbol} — ${el.name} ($${el.canonicalUnitValueUsd.toLocaleString()})`, el.id);
+                const opt2 = new Option(`${el.symbol} — ${el.name} ($${el.canonicalUnitValueUsd.toLocaleString()})`, el.id);
+                optgroupSrc.appendChild(opt1);
+                optgroupTgt.appendChild(opt2);
+            });
+
+            srcSelect.appendChild(optgroupSrc);
+            tgtSelect.appendChild(optgroupTgt);
+        }
+
+        srcSelect.value = "4004"; // Default: SOLAR
+        tgtSelect.value = "2001"; // Default: BTC
+
+        let holographicChain;
+        let chartMode = 'parity'; // 'parity' | 'pair'
+        let chartType = 'candles'; // 'candles' | 'heikin' | 'area' | 'sparkline'
+
+        function updateRateCalculations() {
+            const srcId = parseInt(srcSelect.value);
+            const tgtId = parseInt(tgtSelect.value);
+            const srcEl = registry.getById(srcId);
+            const tgtEl = registry.getById(tgtId);
+
+            if (srcEl && tgtEl) {
+                srcSpv.innerText = `${srcEl.seriesSpv} · ${srcEl.underlyingPhysicalAnchor}`;
+                tgtSpv.innerText = `${tgtEl.seriesSpv} · ${tgtEl.underlyingPhysicalAnchor}`;
+
+                const rawRate = srcEl.canonicalUnitValueUsd / tgtEl.canonicalUnitValueUsd;
+                rateDisplay.value = `1 ${srcEl.symbol} = ${rawRate < 0.001 ? rawRate.toExponential(6) : rawRate.toFixed(8)} ${tgtEl.symbol}`;
+                rateHidden.value = Math.max(1, Math.round(rawRate * 1_000_000));
+                lblActivePair.innerText = `${srcEl.symbol} / ${tgtEl.symbol}`;
+                
+                // If in pair mode, trigger chart re-anchor
+                if (chartMode === 'pair' && typeof initHistoricalSeries === 'function') {
+                    initHistoricalSeries();
+                }
+            }
+        }
+
+        srcSelect.addEventListener('change', updateRateCalculations);
+        tgtSelect.addEventListener('change', updateRateCalculations);
+        updateRateCalculations();
+
+        // -------------------------------------------------------------
+        // 3D Holographic Canvas Visualizer Engine
+        // -------------------------------------------------------------
+        const canvas3D = document.getElementById('holographic-canvas');
+        const ctx3D = canvas3D.getContext('2d');
+        let selectedNode = null;
+        let tradePulseIntensity = 0.0;
+
+        function resize3DCanvas() {
+            const rect = canvas3D.parentElement.getBoundingClientRect();
+            canvas3D.width = rect.width * window.devicePixelRatio;
+            canvas3D.height = rect.height * window.devicePixelRatio;
+            ctx3D.scale(window.devicePixelRatio, window.devicePixelRatio);
+        }
+        window.addEventListener('resize', resize3DCanvas);
+        resize3DCanvas();
+
+        // Logarithmic Price Radius Function: Distance from Central Orb represents Canonical Unit Price
+        function getPriceRadius(usdPrice) {
+            const minLog = Math.log10(0.005);
+            const maxLog = Math.log10(75000);
+            const norm = (Math.log10(Math.max(0.005, usdPrice)) - minLog) / (maxLog - minLog);
+            // Radial distance from central orb: 44px (e.g. JPY $0.0067) to 142px (e.g. BTC $68,500)
+            return 44 + Math.max(0, Math.min(1, norm)) * 98;
+        }
+
+        const nodeElements = registry.getAll();
+        const nodes = nodeElements.map((el, i) => {
+            const phi = Math.acos(-1 + (2 * i) / nodeElements.length);
+            const theta = Math.sqrt(nodeElements.length * Math.PI) * phi;
+            const r = getPriceRadius(el.canonicalUnitValueUsd);
+            // Volume baseline proportional to real-world market liquidity
+            const baseVol = el.tier === 'crypto' ? 8500 : (el.tier === 'commodity' ? 6200 : (el.tier === 'fiat' ? 9500 : 4200));
+            return {
+                element: el,
+                orbitalRadius: r,
+                volume: baseVol + Math.random() * 2000,
+                flare: 0.0,
+                baseX: r * Math.sin(phi) * Math.cos(theta),
+                baseY: r * Math.sin(phi) * Math.sin(theta),
+                baseZ: r * Math.cos(phi),
+                x: 0, y: 0, z: 0,
+                screenX: 0, screenY: 0,
+                scale: 1, depthZ: 0
+            };
+        });
+
+        let rotX = 0.003;
+        let rotY = 0.006;
+        let angleX = 0.3;
+        let angleY = 0.5;
+        let isDragging = false;
+        let lastMouseX = 0, lastMouseY = 0;
+
+        canvas3D.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            lastMouseX = e.clientX;
+            lastMouseY = e.clientY;
+        });
+        window.addEventListener('mouseup', () => isDragging = false);
+        window.addEventListener('mousemove', (e) => {
+            if (isDragging) {
+                angleY += (e.clientX - lastMouseX) * 0.006;
+                angleX += (e.clientY - lastMouseY) * 0.006;
+                lastMouseX = e.clientX;
+                lastMouseY = e.clientY;
+            }
+        });
+
+        canvas3D.addEventListener('click', (e) => {
+            const rect = canvas3D.getBoundingClientRect();
+            const clickX = e.clientX - rect.left;
+            const clickY = e.clientY - rect.top;
+            const width = canvas3D.width / window.devicePixelRatio;
+            const height = canvas3D.height / window.devicePixelRatio;
+            const cx = width / 2;
+            const cy = height / 2;
+
+            // Check if user clicked the Central Parity Orb
+            const distCenter = Math.hypot(cx - clickX, cy - clickY);
+            if (distCenter < 24) {
+                selectedNode = 'PARITY_ORB';
+                document.getElementById('inspector-symbol').innerText = `Φ — Holographic Parity Index`;
+                document.getElementById('inspector-desc').innerText = `Master Invariant Anchor · 23 Universal Value Elements`;
+                const currentVal = document.getElementById('chart-val-display')?.innerText || '$76,098.37';
+                document.getElementById('inspector-val').innerText = `${currentVal} USD`;
+                if (btnModeParity) btnModeParity.click();
+                return;
+            }
+
+            for (const n of nodes) {
+                const dist = Math.hypot(n.screenX - clickX, n.screenY - clickY);
+                if (dist < (18 + n.volume * 0.001) * n.scale) {
+                    selectedNode = n;
+                    document.getElementById('inspector-symbol').innerText = `${n.element.symbol} — ${n.element.name}`;
+                    document.getElementById('inspector-desc').innerText = `${n.element.seriesSpv} · Vol: ${Math.round(n.volume).toLocaleString()} Units · Orbit R: ${Math.round(n.orbitalRadius)}px`;
+                    document.getElementById('inspector-val').innerText = `$${n.element.canonicalUnitValueUsd.toLocaleString()} USD`;
+                    tgtSelect.value = n.element.id.toString();
+                    updateRateCalculations();
+                    break;
+                }
+            }
+        });
+
+        function renderNodeItem(node) {
+            // Volume intensity calculation (0.0 to 1.0)
+            const maxVol = Math.max(12000, ...nodes.map(n => n.volume));
+            const volNorm = Math.min(1.0, Math.max(0.1, node.volume / maxVol));
+            
+            // Radius scales dynamically with volume intensity + transient trade flare
+            const baseRadius = Math.max(3.2, (3.8 + 5.2 * volNorm + node.flare * 4.5) * node.scale);
+            const isSelected = selectedNode === node;
+
+            ctx3D.save();
+
+            // High Volume / Trade Flare Radiant Halo
+            if (volNorm > 0.45 || node.flare > 0.05) {
+                const haloRadius = baseRadius * (1.7 + 0.6 * volNorm + node.flare * 1.2);
+                const haloGrad = ctx3D.createRadialGradient(node.screenX, node.screenY, baseRadius * 0.5, node.screenX, node.screenY, haloRadius);
+                haloGrad.addColorStop(0, `${node.element.color}88`);
+                haloGrad.addColorStop(0.6, `${node.element.color}22`);
+                haloGrad.addColorStop(1, 'rgba(0,0,0,0)');
+                ctx3D.fillStyle = haloGrad;
+                ctx3D.beginPath();
+                ctx3D.arc(node.screenX, node.screenY, haloRadius, 0, Math.PI * 2);
+                ctx3D.fill();
+            }
+
+            // Core Orb Body
+            ctx3D.beginPath();
+            ctx3D.arc(node.screenX, node.screenY, baseRadius, 0, Math.PI * 2);
+            ctx3D.fillStyle = node.element.color;
+
+            // Luminous Glow Intensity scales with Volume
+            const glowIntensity = Math.round((8 + 26 * volNorm + node.flare * 25) * (isSelected ? 1.6 : 1.0));
+            ctx3D.shadowColor = node.element.color;
+            ctx3D.shadowBlur = glowIntensity;
+
+            if (isSelected) {
+                ctx3D.lineWidth = 2.5;
+                ctx3D.strokeStyle = '#ffffff';
+                ctx3D.stroke();
+            }
+            ctx3D.fill();
+
+            // Decay transient flare
+            if (node.flare > 0) {
+                node.flare = Math.max(0, node.flare - 0.025);
+            }
+
+            // Symbol and Volume Tag
+            if (node.scale > 0.75 || isSelected) {
+                ctx3D.shadowBlur = 0;
+                ctx3D.font = `${Math.round(9 * node.scale)}px monospace`;
+                ctx3D.fillStyle = isSelected ? '#ffffff' : 'rgba(255,255,255,0.85)';
+                ctx3D.fillText(node.element.symbol, node.screenX + baseRadius + 4, node.screenY + 2);
+
+                if (volNorm > 0.65 || isSelected) {
+                    ctx3D.font = `${Math.round(7.5 * node.scale)}px monospace`;
+                    ctx3D.fillStyle = 'rgba(255, 204, 0, 0.75)';
+                    ctx3D.fillText(`${(node.volume / 1000).toFixed(1)}k`, node.screenX + baseRadius + 4, node.screenY + 11);
+                }
+            }
+            ctx3D.restore();
+        }
+
+        function renderCentralParityOrb(cx, cy) {
+            const isSelected = selectedNode === 'PARITY_ORB';
+            const pulse = 1.0 + 0.08 * Math.sin(Date.now() * 0.003);
+
+            ctx3D.save();
+
+            // 1. Outer Ambient Corona Aura
+            const auraRadius = 36 * pulse;
+            const auraGrad = ctx3D.createRadialGradient(cx, cy, 3, cx, cy, auraRadius);
+            auraGrad.addColorStop(0, 'rgba(0, 255, 204, 0.40)');
+            auraGrad.addColorStop(0.35, 'rgba(0, 212, 255, 0.20)');
+            auraGrad.addColorStop(0.7, 'rgba(187, 134, 252, 0.08)');
+            auraGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+            ctx3D.fillStyle = auraGrad;
+            ctx3D.beginPath();
+            ctx3D.arc(cx, cy, auraRadius, 0, Math.PI * 2);
+            ctx3D.fill();
+
+            // 2. Gyroscopic Rotating Orbital Ring
+            ctx3D.save();
+            ctx3D.translate(cx, cy);
+            ctx3D.rotate(angleY * 1.8);
+            ctx3D.strokeStyle = 'rgba(0, 255, 204, 0.45)';
+            ctx3D.lineWidth = 1.2;
+            ctx3D.beginPath();
+            ctx3D.ellipse(0, 0, 26 * pulse, 9 * pulse, 0.3, 0, Math.PI * 2);
+            ctx3D.stroke();
+            ctx3D.restore();
+
+            // 3. Central Luminous Sphere Core
+            const coreRadius = 15;
+            const coreGrad = ctx3D.createRadialGradient(cx - 3, cy - 3, 1, cx, cy, coreRadius);
+            coreGrad.addColorStop(0, '#ffffff');
+            coreGrad.addColorStop(0.35, '#00ffcc');
+            coreGrad.addColorStop(0.75, '#008899');
+            coreGrad.addColorStop(1, '#041724');
+
+            ctx3D.fillStyle = coreGrad;
+            ctx3D.shadowColor = isSelected ? '#ffffff' : '#00ffcc';
+            ctx3D.shadowBlur = isSelected ? 28 : 18;
+            ctx3D.beginPath();
+            ctx3D.arc(cx, cy, coreRadius, 0, Math.PI * 2);
+            ctx3D.fill();
+
+            if (isSelected) {
+                ctx3D.lineWidth = 2;
+                ctx3D.strokeStyle = '#ffffff';
+                ctx3D.stroke();
+            }
+
+            // 4. Center Glyphic Symbol (Greek Phi: Φ)
+            ctx3D.fillStyle = '#02060c';
+            ctx3D.font = 'bold 12px monospace';
+            ctx3D.textAlign = 'center';
+            ctx3D.textBaseline = 'middle';
+            ctx3D.shadowBlur = 0;
+            ctx3D.fillText('Φ', cx, cy + 0.5);
+
+            // 5. Parity Metric Label
+            ctx3D.font = 'bold 8px monospace';
+            ctx3D.fillStyle = '#00ffcc';
+            ctx3D.fillText('Φ PARITY INDEX', cx, cy + 24);
+
+            ctx3D.restore();
+        }
+
+        function renderLattice() {
+            const width = canvas3D.width / window.devicePixelRatio;
+            const height = canvas3D.height / window.devicePixelRatio;
+            const cx = width / 2;
+            const cy = height / 2;
+
+            ctx3D.clearRect(0, 0, width, height);
+
+            if (!isDragging) {
+                angleY += rotY;
+                angleX += rotX * 0.3;
+            }
+
+            const cosY = Math.cos(angleY), sinY = Math.sin(angleY);
+            const cosX = Math.cos(angleX), sinX = Math.sin(angleX);
+
+            for (const node of nodes) {
+                let x1 = node.baseX * cosY - node.baseZ * sinY;
+                let z1 = node.baseZ * cosY + node.baseX * sinY;
+                let y1 = node.baseY * cosX - z1 * sinX;
+                let z2 = z1 * cosX + node.baseY * sinX;
+
+                node.x = x1;
+                node.y = y1;
+                node.z = z2;
+
+                const fov = 280;
+                const scale = fov / (fov + z2);
+                node.scale = Math.max(0.3, scale);
+                node.depthZ = z2;
+                node.screenX = cx + x1 * scale;
+                node.screenY = cy + y1 * scale;
+            }
+
+            // Draw Central Parity Tether Rays (Anchor to Center Orb)
+            ctx3D.lineWidth = 0.8;
+            for (const n of nodes) {
+                const alpha = Math.max(0.04, 0.12 * n.scale);
+                ctx3D.strokeStyle = `rgba(0, 255, 204, ${alpha})`;
+                ctx3D.beginPath();
+                ctx3D.moveTo(cx, cy);
+                ctx3D.lineTo(n.screenX, n.screenY);
+                ctx3D.stroke();
+            }
+
+            // Draw Lattice Connecting Rays between nodes
+            ctx3D.lineWidth = 1;
+            for (let i = 0; i < nodes.length; i++) {
+                for (let j = i + 1; j < nodes.length; j++) {
+                    const d = Math.hypot(nodes[i].x - nodes[j].x, nodes[i].y - nodes[j].y, nodes[i].z - nodes[j].z);
+                    if (d < 95) {
+                        const alpha = Math.max(0.03, (1 - d / 95) * 0.22);
+                        ctx3D.strokeStyle = `rgba(0, 255, 204, ${alpha})`;
+                        ctx3D.beginPath();
+                        ctx3D.moveTo(nodes[i].screenX, nodes[i].screenY);
+                        ctx3D.lineTo(nodes[j].screenX, nodes[j].screenY);
+                        ctx3D.stroke();
+                    }
+                }
+            }
+
+            // Pulse Ray
+            if (tradePulseIntensity > 0) {
+                const srcNode = nodes.find(n => n.element.id === parseInt(srcSelect.value));
+                const tgtNode = nodes.find(n => n.element.id === parseInt(tgtSelect.value));
+                if (srcNode && tgtNode) {
+                    ctx3D.save();
+                    ctx3D.strokeStyle = `rgba(0, 255, 204, ${tradePulseIntensity})`;
+                    ctx3D.lineWidth = 3;
+                    ctx3D.shadowColor = '#00ffcc';
+                    ctx3D.shadowBlur = 15;
+                    ctx3D.beginPath();
+                    ctx3D.moveTo(srcNode.screenX, srcNode.screenY);
+                    ctx3D.lineTo(tgtNode.screenX, tgtNode.screenY);
+                    ctx3D.stroke();
+                    ctx3D.restore();
+                }
+                tradePulseIntensity = Math.max(0, tradePulseIntensity - 0.02);
+            }
+
+            // 3D Depth Partition: Nodes Behind (z < 0) -> Central Orb (z = 0) -> Nodes In Front (z >= 0)
+            const nodesBehind = nodes.filter(n => n.depthZ < 0).sort((a, b) => a.depthZ - b.depthZ);
+            const nodesFront = nodes.filter(n => n.depthZ >= 0).sort((a, b) => a.depthZ - b.depthZ);
+
+            // 1. Draw Nodes Orbiting Behind the Central Parity Orb
+            for (const node of nodesBehind) {
+                renderNodeItem(node);
+            }
+
+            // 2. Draw Central Parity Orb (Master Invariant Vector Phi)
+            renderCentralParityOrb(cx, cy);
+
+            // 3. Draw Nodes Orbiting in Front of the Central Parity Orb
+            for (const node of nodesFront) {
+                renderNodeItem(node);
+            }
+
+            requestAnimationFrame(renderLattice);
+        }
+        renderLattice();
+
+        // -------------------------------------------------------------
+        // CANDLESTICK, HEIKIN-ASHI & SEPARATED VOLUME CHART ENGINE
+        // -------------------------------------------------------------
+        const chartCanvas = document.getElementById('chain-chart-canvas');
+        const chartCtx = chartCanvas.getContext('2d');
+        let candles = [];
+        let totalScalarVolume = 84200.0;
+        let cumulativeParityChange = 0.34;
+
+        function resizeChartCanvas() {
+            const rect = chartCanvas.parentElement.getBoundingClientRect();
+            chartCanvas.width = rect.width * window.devicePixelRatio;
+            chartCanvas.height = rect.height * window.devicePixelRatio;
+            chartCtx.scale(window.devicePixelRatio, window.devicePixelRatio);
+            drawChart();
+        }
+        window.addEventListener('resize', resizeChartCanvas);
+
+        // Compute Baseline Parity Vector Magnitude Phi_0
+        function getBaseParityIndex() {
+            return UNIVERSAL_VALUE_ELEMENTS.reduce((sum, el) => sum + el.canonicalUnitValueUsd, 0);
+        }
+
+        function getActivePairBaseRate() {
+            const srcId = parseInt(srcSelect.value);
+            const tgtId = parseInt(tgtSelect.value);
+            const srcEl = registry.getById(srcId);
+            const tgtEl = registry.getById(tgtId);
+            return (srcEl && tgtEl) ? (srcEl.canonicalUnitValueUsd / tgtEl.canonicalUnitValueUsd) : 1.0;
+        }
+
+        function initHistoricalSeries() {
+            candles = [];
+            const baseVal = (chartMode === 'parity') ? getBaseParityIndex() : getActivePairBaseRate();
+            let current = baseVal * 0.992;
+            const now = Date.now();
+
+            for (let i = 45; i >= 0; i--) {
+                const open = current;
+                const jitter = (Math.random() - 0.48) * (baseVal * 0.0035);
+                const close = open + jitter;
+                const high = Math.max(open, close) + Math.random() * (baseVal * 0.002);
+                const low = Math.min(open, close) - Math.random() * (baseVal * 0.002);
+                const volume = 200 + Math.random() * 1500;
+                candles.push({
+                    time: now - i * 1500,
+                    open, high, low, close, volume
+                });
+                current = close;
+            }
+            updateChartMetricsHeader();
+            drawChart();
+        }
+
+        function addLiveTick(deltaVolume = 0, priceImpactFraction = 0) {
+            if (candles.length === 0) return;
+            const last = candles[candles.length - 1];
+            const base = (chartMode === 'parity') ? getBaseParityIndex() : getActivePairBaseRate();
+            
+            // Random micro jitter + impact
+            const jitter = (Math.random() - 0.49) * (base * 0.0008) + (base * priceImpactFraction);
+            const newClose = Math.max(0.000001, last.close + jitter);
+            
+            last.close = newClose;
+            last.high = Math.max(last.high, newClose);
+            last.low = Math.min(last.low, newClose);
+            last.volume += deltaVolume > 0 ? deltaVolume : (50 + Math.random() * 150);
+            totalScalarVolume += deltaVolume > 0 ? deltaVolume : 85;
+
+            // Every 5 ticks, seal candle and push new one
+            if (Math.random() < 0.2) {
+                candles.push({
+                    time: Date.now(),
+                    open: last.close,
+                    high: last.close,
+                    low: last.close,
+                    close: last.close,
+                    volume: 0
+                });
+                if (candles.length > 55) candles.shift();
+            }
+
+            updateChartMetricsHeader();
+            drawChart();
+        }
+
+        function updateChartMetricsHeader() {
+            if (candles.length === 0) return;
+            const last = candles[candles.length - 1];
+            const first = candles[0];
+            const pct = ((last.close - first.open) / first.open) * 100;
+            
+            const displayEl = document.getElementById('chart-val-display');
+            const changeEl = document.getElementById('chart-change-display');
+            const volEl = document.getElementById('chart-vol-display');
+
+            if (chartMode === 'parity') {
+                displayEl.innerText = `$${last.close.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+            } else {
+                displayEl.innerText = last.close < 0.001 ? last.close.toExponential(5) : last.close.toFixed(6);
+            }
+
+            changeEl.innerText = `${pct >= 0 ? '+' : ''}${pct.toFixed(2)}%`;
+            changeEl.className = `stat-num ${pct >= 0 ? 'change-pos' : 'change-neg'}`;
+            volEl.innerText = `${(totalScalarVolume / 1000).toFixed(1)}K SCALAR`;
+        }
+
+        function drawChart() {
+            const w = chartCanvas.width / window.devicePixelRatio;
+            const h = chartCanvas.height / window.devicePixelRatio;
+            if (w <= 0 || h <= 0 || candles.length === 0) return;
+
+            chartCtx.clearRect(0, 0, w, h);
+
+            // Split into Upper Pane (Price/Candles ~72%) and Lower Pane (Volume ~28%)
+            const pricePaneHeight = h * 0.70;
+            const volPaneHeight = h * 0.24;
+            const splitY = pricePaneHeight;
+
+            // Compute Heikin-Ashi if selected
+            let renderCandles = candles;
+            if (chartType === 'heikin') {
+                renderCandles = [];
+                for (let i = 0; i < candles.length; i++) {
+                    const c = candles[i];
+                    if (i === 0) {
+                        renderCandles.push({ ...c });
+                    } else {
+                        const prevHA = renderCandles[i - 1];
+                        const haClose = (c.open + c.high + c.low + c.close) / 4;
+                        const haOpen = (prevHA.open + prevHA.close) / 2;
+                        const haHigh = Math.max(c.high, haOpen, haClose);
+                        const haLow = Math.min(c.low, haOpen, haClose);
+                        renderCandles.push({
+                            time: c.time,
+                            open: haOpen,
+                            high: haHigh,
+                            low: haLow,
+                            close: haClose,
+                            volume: c.volume
+                        });
+                    }
+                }
+            }
+
+            // Min and Max for Price
+            let minP = Math.min(...renderCandles.map(c => c.low));
+            let maxP = Math.max(...renderCandles.map(c => c.high));
+            const pPad = (maxP - minP) * 0.1 || 1.0;
+            minP -= pPad;
+            maxP += pPad;
+
+            // Max Volume
+            const maxVol = Math.max(1, ...renderCandles.map(c => c.volume));
+
+            // Grid Lines & Price Labels
+            chartCtx.strokeStyle = 'rgba(14, 23, 38, 0.8)';
+            chartCtx.lineWidth = 1;
+            const gridLines = 4;
+            for (let i = 0; i <= gridLines; i++) {
+                const y = (pricePaneHeight / gridLines) * i;
+                chartCtx.beginPath();
+                chartCtx.moveTo(0, y);
+                chartCtx.lineTo(w, y);
+                chartCtx.stroke();
+
+                // Price label
+                const pVal = maxP - (i / gridLines) * (maxP - minP);
+                chartCtx.fillStyle = '#475569';
+                chartCtx.font = '8px monospace';
+                const pText = chartMode === 'parity' ? `$${pVal.toFixed(0)}` : (pVal < 0.001 ? pVal.toExponential(2) : pVal.toFixed(5));
+                chartCtx.fillText(pText, w - 55, y - 3);
+            }
+
+            // Divider Line for Volume Sub-Metric
+            chartCtx.strokeStyle = '#1e293b';
+            chartCtx.lineWidth = 1;
+            chartCtx.beginPath();
+            chartCtx.moveTo(0, splitY);
+            chartCtx.lineTo(w, splitY);
+            chartCtx.stroke();
+
+            // Label for Separated Volume Sub-Metric
+            chartCtx.fillStyle = '#64748b';
+            chartCtx.font = '8px monospace';
+            chartCtx.fillText("TOTAL A2SPA SCALAR VOLUME (ZERO CHAIN BLOAT INVARIANT)", 8, splitY + 11);
+
+            const n = renderCandles.length;
+            const barWidth = Math.max(2, (w - 70) / n);
+            const spacing = barWidth * 0.25;
+            const candleBodyWidth = barWidth - spacing;
+
+            if (chartType === 'area' || chartType === 'sparkline') {
+                // Area / Line Path
+                chartCtx.beginPath();
+                for (let i = 0; i < n; i++) {
+                    const c = renderCandles[i];
+                    const x = i * barWidth + barWidth / 2;
+                    const y = pricePaneHeight - ((c.close - minP) / (maxP - minP)) * pricePaneHeight;
+                    if (i === 0) chartCtx.moveTo(x, y);
+                    else chartCtx.lineTo(x, y);
+                }
+
+                if (chartType === 'area') {
+                    chartCtx.save();
+                    chartCtx.strokeStyle = '#00ffcc';
+                    chartCtx.lineWidth = 2;
+                    chartCtx.shadowColor = '#00ffcc';
+                    chartCtx.shadowBlur = 8;
+                    chartCtx.stroke();
+
+                    // Fill under curve
+                    chartCtx.lineTo((n - 1) * barWidth + barWidth / 2, pricePaneHeight);
+                    chartCtx.lineTo(barWidth / 2, pricePaneHeight);
+                    chartCtx.closePath();
+                    const grad = chartCtx.createLinearGradient(0, 0, 0, pricePaneHeight);
+                    grad.addColorStop(0, 'rgba(0, 255, 204, 0.25)');
+                    grad.addColorStop(1, 'rgba(0, 255, 204, 0.0)');
+                    chartCtx.fillStyle = grad;
+                    chartCtx.fill();
+                    chartCtx.restore();
+                } else {
+                    // Ultra-clean sparkline
+                    chartCtx.save();
+                    chartCtx.strokeStyle = '#38bdf8';
+                    chartCtx.lineWidth = 2.2;
+                    chartCtx.shadowColor = '#38bdf8';
+                    chartCtx.shadowBlur = 10;
+                    chartCtx.stroke();
+                    chartCtx.restore();
+                }
+            } else {
+                // Candlestick / Heikin-Ashi Rendering
+                for (let i = 0; i < n; i++) {
+                    const c = renderCandles[i];
+                    const x = i * barWidth;
+                    const isBull = c.close >= c.open;
+                    const color = isBull ? '#00e699' : '#ff3366';
+
+                    const openY = pricePaneHeight - ((c.open - minP) / (maxP - minP)) * pricePaneHeight;
+                    const closeY = pricePaneHeight - ((c.close - minP) / (maxP - minP)) * pricePaneHeight;
+                    const highY = pricePaneHeight - ((c.high - minP) / (maxP - minP)) * pricePaneHeight;
+                    const lowY = pricePaneHeight - ((c.low - minP) / (maxP - minP)) * pricePaneHeight;
+
+                    // Wick
+                    chartCtx.strokeStyle = color;
+                    chartCtx.lineWidth = 1;
+                    chartCtx.beginPath();
+                    chartCtx.moveTo(x + candleBodyWidth / 2, highY);
+                    chartCtx.lineTo(x + candleBodyWidth / 2, lowY);
+                    chartCtx.stroke();
+
+                    // Body
+                    const bodyTop = Math.min(openY, closeY);
+                    const bodyHeight = Math.max(1.5, Math.abs(openY - closeY));
+                    chartCtx.fillStyle = color;
+                    chartCtx.fillRect(x, bodyTop, candleBodyWidth, bodyHeight);
+                }
+            }
+
+            // Draw Separated Volume Histogram in Lower Pane
+            for (let i = 0; i < n; i++) {
+                const c = renderCandles[i];
+                const x = i * barWidth;
+                const isBull = c.close >= c.open;
+                const color = isBull ? 'rgba(0, 230, 153, 0.55)' : 'rgba(255, 51, 102, 0.55)';
+                const vHeight = Math.max(1, (c.volume / maxVol) * (volPaneHeight - 16));
+                const vY = h - vHeight;
+
+                chartCtx.fillStyle = color;
+                chartCtx.fillRect(x, vY, candleBodyWidth, vHeight);
+            }
+        }
+
+        // Setup Chart Toggles
+        const btnModeParity = document.getElementById('btn-mode-parity');
+        const btnModePair = document.getElementById('btn-mode-pair');
+
+        btnModeParity.addEventListener('click', () => {
+            chartMode = 'parity';
+            btnModeParity.classList.add('active');
+            btnModePair.classList.remove('active');
+            initHistoricalSeries();
+        });
+
+        btnModePair.addEventListener('click', () => {
+            chartMode = 'pair';
+            btnModePair.classList.add('active');
+            btnModeParity.classList.remove('active');
+            initHistoricalSeries();
+        });
+
+        const typeButtons = [
+            { id: 'btn-type-candle', type: 'candles' },
+            { id: 'btn-type-heikin', type: 'heikin' },
+            { id: 'btn-type-area', type: 'area' },
+            { id: 'btn-type-spark', type: 'sparkline' }
+        ];
+
+        typeButtons.forEach(({ id, type }) => {
+            const btn = document.getElementById(id);
+            btn.addEventListener('click', () => {
+                chartType = type;
+                typeButtons.forEach(b => document.getElementById(b.id).classList.remove('active'));
+                btn.classList.add('active');
+                drawChart();
+            });
+        });
+
+        // Initialize default chart series
+        initHistoricalSeries();
+        resizeChartCanvas();
+
+        // Background simulation tick every 1.2s to reflect network state activity
+        setInterval(() => {
+            addLiveTick();
+            const randNode = nodes[Math.floor(Math.random() * nodes.length)];
+            if (randNode) {
+                randNode.volume += 25 + Math.random() * 60;
+            }
+        }, 1200);
+
+        // -------------------------------------------------------------
+        // Boot Subsystems and WASM Core
+        // -------------------------------------------------------------
+        async function bootProcessor() {
+            appendLog(sabTerm, "Initializing Promethean system execution hooks...");
+            await initMatching();
+            await initZk();
+            
+            const matchingEngine = new MemoryMatchingEngine();
+            holographicChain = new HolographicChainState();
+
+            const BUFFER_SIZE = 1024;
+            const sharedBuffer = new SharedArrayBuffer(BUFFER_SIZE);
+            const memUint8View = new Uint8Array(sharedBuffer);
+
+            appendLog(sabTerm, `SharedArrayBuffer mapped over 0x${BUFFER_SIZE.toString(16)} heap.`, 'success-text');
+            appendLog(sabTerm, `Holographic Chain initialized with ${holographicChain.get_elements_count()} 1-Unit Value Elements.`, 'gold-text');
+
+            // Update top overlay metrics
+            document.getElementById('metric-height').innerText = `#${holographicChain.get_block_height()}`;
+            document.getElementById('metric-elements').innerText = `${holographicChain.get_elements_count()} Units`;
+            const rootHash = Array.from(holographicChain.get_state_root_hash()).map(b => b.toString(16).padStart(2,'0')).join('');
+            document.getElementById('metric-roothash').innerText = `0x${rootHash.slice(0, 10)}...`;
+
+            const mesh = new TPNSMeshBootstrapProfile((networkBytes) => {
+                appendLog(meshTerm, "GossipSub frame ingested from adjacent network tab context.");
+                memUint8View.set(networkBytes, 0);
+                const dataView = new DataView(sharedBuffer);
+                const isBuy = dataView.getUint32(0, true) === 0;
+                const amount = dataView.getBigUint64(12, true);
+                const price = dataView.getBigUint64(20, true);
+
+                const residual = matchingEngine.match_intent(isBuy, Number(price), Number(amount));
+                appendLog(sabTerm, `WASM matching tick complete. Remaining Order Residual: ${residual}`, 'success-text');
+                tradePulseIntensity = 1.0;
+            });
+            await mesh.assembleNetworkMesh();
+
+            const bridge = new HolographicHardwareBridge();
+
+            document.getElementById('trigger-swap-action').addEventListener('click', async () => {
+                const src = parseInt(srcSelect.value);
+                const tgt = parseInt(tgtSelect.value);
+                const volInput = parseFloat(document.getElementById('execution-vol').value) || 1.0;
+                const vol = BigInt(Math.round(volInput * 1_000_000));
+                const rate = BigInt(rateHidden.value);
+
+                tradePulseIntensity = 1.0;
+
+                const hardwareSalt = crypto.getRandomValues(new Uint8Array(16));
+                const zkCommit = ZkOrderCommitment.generate_blind_order(rate, vol, hardwareSalt);
+                appendLog(meshTerm, `ZK-Commitment generated locally: 0x${Array.from(zkCommit.commitment_hash).map(b => b.toString(16).padStart(2,'0')).join('').slice(0,16)}...`, 'success-text');
+
+                const view = new DataView(sharedBuffer);
+                view.setUint32(0, 0, true); // Action Code: 0 = Buy / Swap Intent
+                view.setUint32(4, src, true); 
+                view.setUint32(8, tgt, true); 
+                view.setBigUint64(12, vol, true); 
+                view.setBigUint64(20, rate, true);
+                
+                const payloadSlice = memUint8View.slice(0, 28);
+                try {
+                    await bridge.signActionPayload(payloadSlice, "TPNS-Hardware-Bound-Validation-Key");
+                    await mesh.broadcastIntent(payloadSlice);
+                    appendLog(meshTerm, `Frame [${registry.getById(src)?.symbol} → ${registry.getById(tgt)?.symbol}] emitted onto sovereign mesh.`, 'success-text');
+
+                    // Advance Holographic Chain Block Height using BigInt wrapping
+                    holographicChain.update_unit_value(BigInt(src), holographicChain.get_unit_value_micro_usd(BigInt(src)));
+                    document.getElementById('metric-height').innerText = `#${holographicChain.get_block_height()}`;
+                    const newRoot = Array.from(holographicChain.get_state_root_hash()).map(b => b.toString(16).padStart(2,'0')).join('');
+                    document.getElementById('metric-roothash').innerText = `0x${newRoot.slice(0, 10)}...`;
+
+                    // Spike volume and flare intensity for source and target trading orbs
+                    const srcNode = nodes.find(n => n.element.id === src);
+                    const tgtNode = nodes.find(n => n.element.id === tgt);
+                    if (srcNode) {
+                        srcNode.volume += volInput * 180;
+                        srcNode.flare = 1.0;
+                    }
+                    if (tgtNode) {
+                        tgtNode.volume += volInput * 180;
+                        tgtNode.flare = 1.0;
+                    }
+
+                    // Inject instant trade impact and volume bar spike into the Candlestick & Volume chart!
+                    addLiveTick(volInput * 50, 0.0006);
+
+                } catch (err) {
+                    appendLog(meshTerm, `🛑 Authentication error: ${err.message}`, 'alert-text');
+                }
+            });
+        }
+
+        bootProcessor();
+    </script>
+</body>
+</html>
