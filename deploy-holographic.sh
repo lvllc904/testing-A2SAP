@@ -58,15 +58,16 @@ echo ""
 echo "[3/4] Service URL: ${SERVICE_URL}"
 echo ""
 
-echo "[4/4] Smoke test (30s warm-up)..."
-sleep 5
-HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "${SERVICE_URL}/healthz" --max-time 15)
+echo "[4/4] Smoke test — checking root URL..."
+sleep 3
+HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "${SERVICE_URL}/" --max-time 15)
+PAGE_TITLE=$(curl -s "${SERVICE_URL}/" --max-time 15 | grep -o '<title>[^<]*</title>' | head -1)
 if [ "${HTTP_STATUS}" = "200" ]; then
-  echo "  ✅ Health check passed (HTTP ${HTTP_STATUS})"
+  echo "  ✅ Service healthy (HTTP ${HTTP_STATUS})"
+  echo "  ✅ Page: ${PAGE_TITLE}"
 else
-  echo "  ⚠️  Health check returned HTTP ${HTTP_STATUS} — service is live at:"
-  echo "     ${SERVICE_URL}"
-  echo "     (Verify manually: curl ${SERVICE_URL}/)"
+  echo "  ❌ Smoke test failed (HTTP ${HTTP_STATUS}) — check Cloud Run logs"
+  exit 1
 fi
 
 echo ""
