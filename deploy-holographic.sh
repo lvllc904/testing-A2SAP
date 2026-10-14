@@ -7,7 +7,7 @@ set -e
 # holographic.lvhllc.org via Cloud Run + Cloud Build
 # ─────────────────────────────────────────────────────────────
 
-PROJECT_ID="lvllc"
+PROJECT_ID="studio-9105849211-9ba48"
 REGION="us-central1"
 SERVICE_NAME="tpns-holographic-exchange"
 IMAGE="gcr.io/${PROJECT_ID}/${SERVICE_NAME}"
