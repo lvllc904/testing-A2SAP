@@ -4,13 +4,13 @@ import * as path from 'node:path';
 import * as crypto from 'node:crypto';
 import { UNIVERSAL_VALUE_ELEMENTS, ValueElement } from '../tpns-mesh-network/universal-assets.js';
 
-// Types for A2SPA
+// Settlement subsystem types
 interface SovereignAccount {
   accountId: string;
   balances: Map<number, bigint>; // assetId -> atoms (scaled by baseDecimals)
 }
 
-interface A2SPASettlementIntent {
+interface HolographicSettlementIntent {
   actionId: string;
   accountA: string;
   accountB: string;
@@ -39,8 +39,8 @@ interface BenchmarkTelemetry {
   stateBloatDeltaBytes: number;
 }
 
-describe('TPNS A2SPA (Account-to-Account Settlement Protocol) Pressure Test Matrix', function () {
-  this.timeout(120000); // 2 minutes timeout for intense pressure testing
+describe('TPNS Holographic Chain — Integration & Settlement Verification Suite', function () {
+  this.timeout(120000); // 2 minutes timeout for full integration test run
 
   let matchingWasmPkg: any;
   let zkWasmPkg: any;
@@ -66,7 +66,7 @@ describe('TPNS A2SPA (Account-to-Account Settlement Protocol) Pressure Test Matr
     // 3. Instantiate Promethean Holographic Chain
     holographicChain = new matchingWasmPkg.HolographicChainState();
     console.log('\n\x1b[36m========================================================================================\x1b[0m');
-    console.log('\x1b[1m\x1b[36m   PROMETHEAN NETWORK STATE — A2SPA PRESSURE TESTING SUITE INITIALIZED\x1b[0m');
+    console.log('\x1b[1m\x1b[36m   PROMETHEAN NETWORK STATE — HOLOGRAPHIC CHAIN INTEGRATION SUITE INITIALIZED\x1b[0m');
     console.log('\x1b[36m========================================================================================\x1b[0m');
     console.log(`   [HOLOGRAPHIC CHAIN] Initial Block Height: #${holographicChain.get_block_height()}`);
     console.log(`   [HOLOGRAPHIC CHAIN] Tracked Value Elements (1-Unit Vector): ${holographicChain.get_elements_count()} assets`);
@@ -97,14 +97,14 @@ describe('TPNS A2SPA (Account-to-Account Settlement Protocol) Pressure Test Matr
     return totals;
   }
 
-  // Execute single A2SPA settlement
-  function executeA2SPASettlement(
+  // Execute a single holographic settlement between two sovereign accounts
+  function executeSettlement(
     accA: SovereignAccount,
     accB: SovereignAccount,
     srcAsset: ValueElement,
     tgtAsset: ValueElement,
     srcVolumeUnits: number
-  ): { intent: A2SPASettlementIntent; latencyUs: number; success: boolean } {
+  ): { intent: HolographicSettlementIntent; latencyUs: number; success: boolean } {
     const startTime = process.hrtime.bigint();
 
     // 1. Holographic Chain Cross-Rate Calculation (1.0 Unit Invariant Vector)
@@ -166,7 +166,7 @@ describe('TPNS A2SPA (Account-to-Account Settlement Protocol) Pressure Test Matr
     const endTime = process.hrtime.bigint();
     const latencyUs = Number(endTime - startTime) / 1000.0;
 
-    const intent: A2SPASettlementIntent = {
+    const intent: HolographicSettlementIntent = {
       actionId: crypto.randomBytes(16).toString('hex'),
       accountA: accA.accountId,
       accountB: accB.accountId,
@@ -205,7 +205,7 @@ describe('TPNS A2SPA (Account-to-Account Settlement Protocol) Pressure Test Matr
     console.log('   [STAGE 1 PASS] Holographic State Vector & Unit Parity Verified.');
   });
 
-  it('Stage 2: Single-Pair Cross-Tier Deep Pressure Test — 2,000 Cycles of Solar Energy (1 kWh) <-> BTC', async () => {
+  it('Stage 2: Single-Pair Cross-Tier Settlement Benchmark — 2,000 Cycles of Solar Energy (1 kWh) <-> BTC', async () => {
     const CYCLES = 2000;
     const nodeAlpha = createAccount('SOVEREIGN_NODE_ALPHA');
     const nodeBeta = createAccount('SOVEREIGN_NODE_BETA');
@@ -225,7 +225,7 @@ describe('TPNS A2SPA (Account-to-Account Settlement Protocol) Pressure Test Matr
       const buyer = isAlphaSellingSolar ? nodeBeta : nodeAlpha;
       const solarVolume = 10 + (i % 50); // 10 to 59 kWh per settlement
 
-      const res = executeA2SPASettlement(seller, buyer, solarAsset, btcAsset, solarVolume);
+      const res = executeSettlement(seller, buyer, solarAsset, btcAsset, solarVolume);
       expect(res.success).to.be.true;
       latenciesUs.push(res.latencyUs);
     }
@@ -253,7 +253,7 @@ describe('TPNS A2SPA (Account-to-Account Settlement Protocol) Pressure Test Matr
     console.log('\n   \x1b[32m[STAGE 2 BENCHMARK RESULTS: SOLAR <-> BTC SINGLE PAIR]\x1b[0m');
     console.log(`   - Settlements Completed:        ${CYCLES.toLocaleString()} frames`);
     console.log(`   - Total Execution Time:         ${totalTimeMs.toFixed(2)} ms`);
-    console.log(`   - Throughput (A2SPA Rate):      \x1b[1m\x1b[32m${throughputTps.toFixed(0)} settlements/sec\x1b[0m`);
+    console.log(`   - Settlement Throughput:        \x1b[1m\x1b[32m${throughputTps.toFixed(0)} settlements/sec\x1b[0m`);
     console.log(`   - Average Latency:              ${avgLatency.toFixed(2)} µs (${(avgLatency / 1000).toFixed(4)} ms)`);
     console.log(`   - Min Latency:                  ${minLatency.toFixed(2)} µs`);
     console.log(`   - P95 Latency:                  ${p95Latency.toFixed(2)} µs`);
@@ -264,7 +264,7 @@ describe('TPNS A2SPA (Account-to-Account Settlement Protocol) Pressure Test Matr
     expect(avgLatency).to.be.below(1500); // Must be sub-millisecond on average (< 1.5ms)
   });
 
-  it('Stage 3: Multi-Tier Universal Matrix Pressure Test — 5,000 Cross-Tier Settlement Frames', async () => {
+  it('Stage 3: Multi-Tier Universal Matrix Integration Test — 5,000 Cross-Tier Settlement Frames', async () => {
     const TOTAL_FRAMES = 5000;
     const nodeAlpha = createAccount('SOVEREIGN_NODE_ALPHA');
     const nodeBeta = createAccount('SOVEREIGN_NODE_BETA');
@@ -287,7 +287,7 @@ describe('TPNS A2SPA (Account-to-Account Settlement Protocol) Pressure Test Matr
     const latenciesUs: number[] = [];
     let zkValidationsPassed = 0;
 
-    // Chain State Memory Measurement Before
+    // Chain State snapshot before
     const chainElementsBefore = holographicChain.get_elements_count();
     const rootHashBefore = Buffer.from(holographicChain.get_state_root_hash()).toString('hex');
 
@@ -306,7 +306,7 @@ describe('TPNS A2SPA (Account-to-Account Settlement Protocol) Pressure Test Matr
       const buyer = isAlphaSeller ? nodeBeta : nodeAlpha;
       const volumeUnits = 1 + (i % 10);
 
-      const res = executeA2SPASettlement(seller, buyer, srcAsset, tgtAsset, volumeUnits);
+      const res = executeSettlement(seller, buyer, srcAsset, tgtAsset, volumeUnits);
       if (res.success) {
         zkValidationsPassed++;
         latenciesUs.push(res.latencyUs);
@@ -317,7 +317,7 @@ describe('TPNS A2SPA (Account-to-Account Settlement Protocol) Pressure Test Matr
     const totalTimeMs = t1 - t0;
     const throughputTps = (TOTAL_FRAMES / totalTimeMs) * 1000.0;
 
-    // Chain State Memory Measurement After
+    // Chain State snapshot after
     const chainElementsAfter = holographicChain.get_elements_count();
     const rootHashAfter = Buffer.from(holographicChain.get_state_root_hash()).toString('hex');
 
@@ -345,7 +345,7 @@ describe('TPNS A2SPA (Account-to-Account Settlement Protocol) Pressure Test Matr
     console.log('\n   \x1b[35m[STAGE 3 BENCHMARK RESULTS: 5,000 CROSS-TIER SETTLEMENT FRAMES]\x1b[0m');
     console.log(`   - Multi-Tier Pairs:             10 Universal Cross-Tier Asset Corridors`);
     console.log(`   - Total Frames Executed:        ${TOTAL_FRAMES.toLocaleString()} settlements`);
-    console.log(`   - Throughput (A2SPA TPS):       \x1b[1m\x1b[35m${throughputTps.toFixed(0)} settlements/sec\x1b[0m`);
+    console.log(`   - Settlement Throughput:        \x1b[1m\x1b[35m${throughputTps.toFixed(0)} settlements/sec\x1b[0m`);
     console.log(`   - Average Latency:              ${avgLatency.toFixed(2)} µs (${(avgLatency / 1000).toFixed(4)} ms)`);
     console.log(`   - P95 Latency:                  ${p95Latency.toFixed(2)} µs`);
     console.log(`   - P99 Latency:                  ${p99Latency.toFixed(2)} µs`);
@@ -367,7 +367,7 @@ describe('TPNS A2SPA (Account-to-Account Settlement Protocol) Pressure Test Matr
       // Atomic increment simulates mesh frame sequencer counter
       Atomics.add(atomicArr, 0, 1);
       // Low-overhead frame slot write (28 bytes)
-      view.setUint32(16, 1, true); // Action: A2SPA settlement
+      view.setUint32(16, 1, true);    // Action: holographic settlement frame
       view.setUint32(20, 4004, true); // Solar
       view.setUint32(24, 2001, true); // BTC
       view.setBigUint64(28, 50n, true); // Volume

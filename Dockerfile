@@ -1,16 +1,20 @@
-FROM rust:1.76-slim-bookworm AS builder
-RUN apt-get update && apt-get install -y curl pkg-config libssl-dev git && rm -rf /var/lib/apt/lists/*
-RUN curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
-WORKDIR /usr/src/tpns-exchange
-COPY . .
-RUN mkdir -p dist/pkg dist/pkg/zk dist/pkg/asgi dist/pkg/cartographer && \
-    cd tpns_matching_engine && wasm-pack build --target web --out-dir ../dist/pkg && cd .. && \
-    cd tpns_zk_privacy && wasm-pack build --target web --out-dir ../dist/pkg/zk && cd .. && \
-    cd tpns_asgi_liquidity && wasm-pack build --target web --out-dir ../dist/pkg/asgi && cd .. && \
-    cd tpns_cartographer && wasm-pack build --target web --out-dir ../dist/pkg/cartographer && cd ..
+# Stage 1: Copy pre-built static assets into nginx
+FROM nginx:alpine
 
-FROM alpine:3.19
-RUN apk add --no-cache bash
-WORKDIR /app
-COPY --from=builder /usr/src/tpns-exchange/dist /app/dist
-CMD ["printf", "TPNS standalone static matrix built successfully.\n"]
+# Remove default nginx config
+RUN rm /etc/nginx/conf.d/default.conf
+
+# Copy our custom nginx config
+COPY nginx.conf /etc/nginx/conf.d/holographic.conf
+
+# Copy the entire pre-built dist/ directory
+COPY dist/ /usr/share/nginx/html/
+
+# Cloud Run requires port 8080
+EXPOSE 8080
+
+# Healthcheck
+HEALTHCHECK --interval=10s --timeout=3s \
+  CMD wget -qO- http://localhost:8080/healthz || exit 1
+
+CMD ["nginx", "-g", "daemon off;"]
